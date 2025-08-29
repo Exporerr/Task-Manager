@@ -3,6 +3,8 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
+	logger "myproject/project/Logger"
 	"myproject/project/db-service/database_connect/service"
 	"myproject/project/shared"
 	"net/http"
@@ -12,11 +14,12 @@ import (
 )
 
 type Handler struct {
-	s service.Service
+	s   service.Service
+	log logger.Logger
 }
 
-func NewHandler(service service.Service) *Handler {
-	return &Handler{service}
+func NewHandler(service service.Service, log logger.Logger) *Handler {
+	return &Handler{service, log}
 }
 
 func (h *Handler) GetTask(w http.ResponseWriter, r *http.Request) {
@@ -27,6 +30,7 @@ func (h *Handler) GetTask(w http.ResponseWriter, r *http.Request) {
 
 	taskID, err := strconv.Atoi(idStr)
 	if err != nil {
+		h.log.ERROR(fmt.Sprintf("Invalid ID error(GetTask-handler):%v", err))
 		http.Error(w, "invalid id", http.StatusBadRequest)
 		return
 	}
@@ -34,18 +38,22 @@ func (h *Handler) GetTask(w http.ResponseWriter, r *http.Request) {
 	task, err := h.s.GetTask(ctx, taskID)
 	if err != nil {
 		if errors.Is(err, service.ErrTaskNotFound) {
+			h.log.ERROR(fmt.Sprintf("task not found(GetTask-handler): %v", err))
 			http.Error(w, "task not found", http.StatusNotFound)
 			return
 		}
+		h.log.ERROR(fmt.Sprintf("GetTask Handler(db-service) failed: %v", err))
 		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(task); err != nil {
+		h.log.ERROR(fmt.Sprintf("Json encoding error: %v", err))
 		http.Error(w, "JSON encoding error", http.StatusInternalServerError)
 		return
 	}
+	h.log.INFO("GetTask Handler executed successfully")
 }
 
 func (h *Handler) Post(w http.ResponseWriter, r *http.Request) {
@@ -54,12 +62,14 @@ func (h *Handler) Post(w http.ResponseWriter, r *http.Request) {
 
 	ctx := r.Context()
 	if r.Header.Get("Content-Type") != "application/json" {
+		h.log.ERROR(fmt.Sprintf("Wrong Contetnt type in Post Handler(db-service): %v", erro))
 		http.Error(w, "Content-Type должен быть application/json", http.StatusUnsupportedMediaType)
 		return
 	}
 	var Task shared.Task
 	err := json.NewDecoder(r.Body).Decode(&Task)
 	if err != nil {
+		h.log.ERROR(fmt.Sprintf("Wrong format of JSON in handler(db-service):%v", err))
 		http.Error(w, "неверный формат JSON", http.StatusBadRequest)
 		return
 	}

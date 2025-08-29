@@ -31,7 +31,7 @@ func main() {
 	logger.Info.Println("Repository Created")
 	s := service.NewService(repo, logger)
 	logger.Info.Println("Service Created")
-	h := handlers.NewHandler(*s)
+	h := handlers.NewHandler(*s, *logger)
 	logger.Info.Println("Handler Created")
 
 	r := mux.NewRouter()
