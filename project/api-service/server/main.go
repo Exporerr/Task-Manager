@@ -1,6 +1,7 @@
 package main
 
 import (
+	logger "myproject/project/Logger"
 	"myproject/project/api-service/client"
 	"myproject/project/api-service/handlers"
 	"myproject/project/api-service/service"
@@ -16,12 +17,13 @@ import (
 )
 
 func main() {
+	logger := logger.NewLogger()
 	cfg := shared.Config{}
 	data, _ := os.ReadFile("config.yaml")
 	yaml.Unmarshal(data, &cfg)
-	client := client.NewClient(cfg.DBService.URL)
-	service := service.NewService(client)
-	handler := handlers.NewHandler(*service)
+	client := client.NewClient(cfg.DBService.URL, *logger)
+	service := service.NewService(client, logger)
+	handler := handlers.NewHandler(*service, logger)
 
 	r := mux.NewRouter()
 
