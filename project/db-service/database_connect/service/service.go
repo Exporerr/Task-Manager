@@ -51,15 +51,15 @@ func (s *Service) CreateTask(ctx context.Context, task shared.Task) (int, error)
 }
 
 func (s *Service) GetTask(ctx context.Context, taskID int) (shared.Task, error) {
-	//Вызов репозитория 
+	//Вызов репозитория
 	task, err := s.repo.GetTask(ctx, taskID)
 	if err != nil {
-		s.log.ERROR(fmt.Sprintf("repo.GetTask failed: %v",err))
+		s.log.ERROR(fmt.Sprintf("repo.GetTask failed: %v", err))
 		return task, err
 	}
 	//Валидация данных
 	if strings.TrimSpace(task.Title) == "" {
-		s.log.ERROR(fmt.Sprintf("GetTask validation failed: title is empty|%v",ErrInvalidInput))
+		s.log.ERROR(fmt.Sprintf("GetTask validation failed: title is empty|%v", ErrInvalidInput))
 		return task, fmt.Errorf("task title is empty")
 	}
 	s.log.INFO("GetTask(db-service) executed successfully")
@@ -69,16 +69,21 @@ func (s *Service) GetTask(ctx context.Context, taskID int) (shared.Task, error) 
 func (s *Service) GetAllTasks(ctx context.Context) ([]shared.Task, error) {
 	tasks, err := s.repo.GetAllTasks(ctx)
 	if err != nil {
+		s.log.ERROR(fmt.Sprintf("repo.GetAllTasks failed: %v", err))
 		return nil, err
 	}
 
 	if len(tasks) == 0 {
+		s.log.ERROR(fmt.Sprintf("Empty slice error: %v", err))
 		return nil, ErrEmptySlice
 	}
 
 	if len(tasks) == 1 {
+		s.log.ERROR(fmt.Sprintf("Not many tasks that were expected: %v", err))
 		return nil, ErrTooFewTasks
 	}
+	s.log.INFO("GetAllTask(db-service) executed successfully!")
+	s.log.DEBUG("Success")
 
 	return tasks, nil
 }
@@ -97,10 +102,14 @@ func (s *Service) ModifyTask(ctx context.Context, taskID int, action string) err
 	}
 
 	if err != nil {
+		s.log.ERROR(fmt.Sprintf("ModifyTask failed: %v", err))
 		return err
 	}
 	if rowsAffected == 0 {
+		s.log.ERROR(fmt.Sprintf("ModifyTask failed(task not found): %v", err))
 		return ErrTaskNotFound
 	}
+	s.log.INFO("ModifyTask(db-service) executed successfully")
+	s.log.DEBUG("Success")
 	return nil
 }
