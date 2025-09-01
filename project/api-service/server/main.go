@@ -5,6 +5,7 @@ import (
 	"myproject/project/api-service/client"
 	"myproject/project/api-service/handlers"
 	"myproject/project/api-service/service"
+	"myproject/project/middleware"
 	"myproject/project/shared"
 
 	"log"
@@ -26,6 +27,7 @@ func main() {
 	handler := handlers.NewHandler(*service, logger)
 
 	r := mux.NewRouter()
+	r.Use(middleware.LoggingMiddlware)
 
 	r.HandleFunc("/tasks", handler.Post).Methods("POST")
 	r.HandleFunc("/tasks/{id}", handler.Get).Methods("GET")
